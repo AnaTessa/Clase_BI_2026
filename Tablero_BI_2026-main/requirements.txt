@@ -1,8 +1,0 @@
-# Aquí colocaremos todas las bibliotecas que se necesitan instalar
-pandas
-numpy
-matplotlib
-seaborn
-plotly
-requests
-pywaffle
