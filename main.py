@@ -5,27 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pywaffle import Waffle
 
-# -----------------------------
-# HEADER
-# -----------------------------
-
-def show_header(text_title: str):
-
-    col1, col2 = st.columns([1,6])
-
-    with col1:
-        st.image("A95628AB-88C8-4FAA-A86D-A877C52152F0.jpg", width=200)
-
-    with col2:
-        st.title(text_title)
-        st.caption("📘 Developed for: *Business Intelligence (Graduate Level)*")
-        st.caption("Instructor: Edgar Avalos-Gauna (2025), Universidad Panamericana")
-
-
-# -----------------------------
-# LOAD DATA
-# -----------------------------
-
 @st.cache_data
 def load_data():
 
@@ -62,22 +41,66 @@ def load_data():
 # MAPA
 # -----------------------------
 
-def plot_map(df):
+import streamlit as st
 
-    fig, ax = plt.subplots(figsize=(8,6))
+# ESTA DEBE SER LA LÍNEA 1 (después de los imports de librerías base)
+st.set_page_config(layout="wide", page_title="Ecobici Dashboard UP")
 
-    sns.scatterplot(
-        data=df,
-        x="lon",
-        y="lat",
-        ax=ax
-    )
+# Inyección de CSS corregida y segura
+st.markdown("""
+    <style>
+        /* Reducir el espacio superior sin ocultar los botones de control */
+        .block-container {
+            padding-top: 1rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
+        }
+        
+        /* En lugar de ocultar el header completo, solo quitamos el fondo */
+        header {
+            background-color: rgba(0,0,0,0) !important;
+        }
 
-    ax.set_title("Ubicación de estaciones EcoBici")
-    ax.set_xlabel("Longitud")
-    ax.set_ylabel("Latitud")
+        /* Forzar que el botón del Sidebar sea visible (flecha >) */
+        .css-6q9sum.edgvb6w4 {
+            visibility: visible !important;
+            background-color: white !important;
+            border-radius: 50%;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
-    return fig
+# Ahora sí, el resto de las importaciones de tus módulos
+try:
+    from Modules.UI.header import show_header
+    from Modules.Data.ecobici_service import EcobiciService
+    from Modules.Viz.viz_service import EcobiciViz
+except Exception as e:
+    st.error(f"Error al importar módulos: {e}")
+
+# --- EJECUCIÓN DEL TABLERO ---
+
+def main():
+    # Encabezado
+    show_header("Análisis de Movilidad: Ecobici CDMX")
+    
+    # Instanciar servicios
+    service = EcobiciService()
+    viz = EcobiciViz()
+    
+    # Carga de datos
+    with st.spinner('Cargando datos de la API de Ecobici...'):
+        df = service.get_full_data()
+    
+    if df is not None and not df.empty:
+        # Ejecutar la visualización que creamos en viz_service.py
+        viz.render_map_and_waffle(df)
+    else:
+        st.error("No se pudieron obtener datos. Verifica tu conexión o la API de Ecobici.")
+
+if __name__ == "__main__":
+    main()
 
 
 # -----------------------------
@@ -104,40 +127,6 @@ def plot_capacity(df):
     return fig
 
 
-# -----------------------------
-# WAFFLE ESTACIÓN
-# -----------------------------
-
-def plot_station(df, station_id):
-
-    df_filtrado = df[df["station_id"] == station_id]
-
-    if df_filtrado.empty:
-        return None
-
-    fila = df_filtrado.iloc[0]
-
-    values = [
-        fila["num_bikes_available"],
-        fila["num_bikes_disabled"],
-        fila["num_docks_available"],
-        fila["num_docks_disabled"]
-    ]
-
-    fig = plt.figure(
-        FigureClass=Waffle,
-        rows=5,
-        values=values,
-        labels=[
-            "Bikes available",
-            "Bikes disabled",
-            "Docks available",
-            "Docks disabled"
-        ],
-        legend={'loc': 'upper left', 'bbox_to_anchor': (1, 1)}
-    )
-
-    return fig
 
 
 # -----------------------------
