@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import matplotlib.pyplot as plt
 from pywaffle import Waffle
+import pandas as pd
 
 class EcobiciViz:
     def render_map_and_waffle(self, df):
@@ -124,3 +125,39 @@ class EcobiciViz:
                 st.caption(f"**Escala:** {leyenda_escala}")
             else:
                 st.info("No hay datos suficientes para generar el gráfico de disponibilidad.")
+
+
+        # --- 4. GRÁFICA EXTRA: TOP ESTACIONES POR CAPACIDAD ---
+        st.markdown("---")
+        st.markdown("### Top estaciones con mayor capacidad")
+
+        if "capacity" in df.columns:
+
+            top_capacity = (
+                df[['name','capacity']]
+                .drop_duplicates()
+                .sort_values("capacity", ascending=False)
+                .head(15)
+            )
+
+            fig_top = px.bar(
+                top_capacity,
+                x="capacity",
+                y="name",
+                orientation="h",
+                title="Top 15 estaciones con mayor capacidad",
+                labels={
+                    "capacity":"Capacidad de bicicletas",
+                    "name":"Estación"
+                }
+            )
+
+            fig_top.update_layout(
+                height=500,
+                yaxis={'categoryorder':'total ascending'}
+            )
+
+            st.plotly_chart(fig_top, use_container_width=True)
+
+        else:
+            st.warning("La columna 'capacity' no está disponible en los datos.")
